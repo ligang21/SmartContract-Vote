@@ -44,11 +44,39 @@ contract Vote{
         require(sender.weight == 1, 'You have not been authorized to vote');
         require(!sender.voted, 'You have voted');
         require(to != msg.sender, 'Self-delegate is not supported');
-        require(Voters[to].weight == 1, '');
+        require(Voters[to].weight == 1, 'The agent is not authorized');
 
         while(Voters[to].delegate != address(0)){
             to = Voters[to].delegate;
-            
+            require(to != msg.sender, "Delegate in loop is not supported");
+        }
+
+        sender.voted = true;
+        sender.delegate = to;
+        if(Voters[to].voted){
+            Proposals[Voters[to].index].count += sender.weight;
+        } else {
+            Voters[to].weight += sender.weight;
+        }
+    }
+
+    function vote(uint proposal) public {
+        Voter memory sender = Voters[msg.sender];
+        require(sender.weight == 1, 'You are not permitted to vote');
+        require(!sender.voted, 'Already voted');
+
+        sender.voted = true;
+        sender.index = proposal;
+        Proposals[proposal].count += sender.weight;
+    }
+
+    function getWinningProposal() public view returns (uint winningProposal){
+        uint winningVoteCount = 0;
+        for(uint i=0; i < Proposals.length; i++){
+            if(Proposals[i].count > winningVoteCount) {
+                winningVoteCount = Proposals[i].count;
+                winningProposal = i;
+            }
         }
     }
 }
