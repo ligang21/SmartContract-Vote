@@ -35,14 +35,16 @@ contract Vote{
             msg.sender == Creator,
             'Only the contract creator can authorize some people to vote'
         );
-        require(Voters[voter].weight == 0, 'the current voter had been authorized');
+        require(Voters[voter].weight == 0, 'The current voter had been authorized');
         Voters[voter].weight = 1;
     }
 
     function delegate(address to) public {
-        Voter storage sender = Voters[msg.sender];
+        Voter memory sender = Voters[msg.sender];
+        require(sender.weight == 1, 'You have not been authorized to vote');
         require(!sender.voted, 'You have voted');
         require(to != msg.sender, 'Self-delegate is not supported');
+        require(Voters[to].weight == 1, '');
 
         while(Voters[to].delegate != address(0)){
             to = Voters[to].delegate;
